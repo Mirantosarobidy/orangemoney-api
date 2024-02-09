@@ -240,4 +240,130 @@ class Orangemoney extends PayementModule
 
         return $helper->generateForm([$fieldsForm]);
     }
+
+    /**
+     * Configuration formulaire de paiement
+     */
+    private function getConfigurationFormInputs()
+    {
+        return [
+            [
+                'type' => 'text',
+                'label' => $this->l('URL pour authentifiaction OAUTH'),
+                'name' => 'OAUTH_URL',
+                'required' => true,
+                'empty_message' => $this->l('Completez URL pour authentifiaction'),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("Authorization Key (CONSUMER KEY)"),
+                'name' => 'CONSUMER_KEY',
+                'required' => true,
+                'empty_message' => $this->l("Completez l'Authorization"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Transaction Initialization URL'),
+                'name' => 'BASE_URL',
+                'required' => true,
+                'empty_message' => $this->l('Completez la Base URL'),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("Transaction Status URL"),
+                'name' => 'TRANSACTION_STATUS_URL',
+                'required' => true,
+                'empty_message' => $this->l("Remplir l'URL pour vérifier le statut de transaction"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Token'),
+                'name' => 'ACCESS_TOKEN',
+                'disabled' => true,
+                'empty_message' => $this->l("Ce champ va être completer automatiquement"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("Date d'Expiration du token"),
+                'name' => 'TOKEN_EXPIRE',
+                'disabled' => true,
+                'empty_message' => $this->l("Ce champ va être completer automatiquement"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l('Clé du marchant (MERCHANT KEY)'),
+                'name' => 'MERCHANT_KEY',
+                'required' => true,
+                'empty_message' => $this->l("Completez la Clé du Marchand"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("Devise"),
+                'name' => 'CURRENCY',
+                'required' => true,
+                'empty_message' => $this->l("Remplir Devise"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("URL de retour"),
+                'name' => 'RETURN_URL',
+                'required' => true,
+                'empty_message' => $this->l("Remplir URL de retour"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("URL d'annulation"),
+                'name' => 'CANCEL_URL',
+                'required' => true,
+                'empty_message' => $this->l("Remplir URL d'abandon"),
+            ],
+            [
+                'type' => 'text',
+                'label' => $this->l("Langue (mettre fr pour français)"),
+                'name' => 'LANG',
+                'required' => true,
+                'empty_message' => $this->l("Remplir la langue"),
+            ],
+        ];
+    }
+
+    /**
+     * Configuration des champs de valeurs
+     */
+    public function getConfigFieldsValues() 
+    {
+        $configFields = [
+            'OAUTH_URL',
+            'BASE_URL',
+            'CONSUMER_KEY',
+            'MERCHANT_KEY',
+            'ACCESS_TOKEN',
+            'TOKEN_EXPIRE',
+            'CURRENCY',
+            'TRANSACTION_STATUS_URL',
+            'CANCEL_URL',
+            'RETURN_URL',
+            'LANG',
+        ];
+
+        $values = [];
+
+        foreach ($configFields as $field) {
+            $values[$field] = Tools::getValue($field, Configuration::get($field));
+        }
+
+        return $values;
+    }
+
+    /**
+     * Configuration des informations templates
+     */
+    public function getTemplateVariables()
+    {
+        return [
+            'shop_name' => $this->context->shop->name,
+            'custom_var' => $this->l('My custom var value'),
+            'payment_details' => $this->l('custom details'),
+        ];
+    }
 } 
