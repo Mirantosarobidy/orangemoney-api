@@ -157,4 +157,87 @@ class Orangemoney extends PayementModule
 
         return [$apiPayment];
     }
-}
+
+    /**
+     * Message de confirmation
+     */
+    public function hookDisplayPaymentReturn($params)
+    {
+        if (!$this->active) {
+            return;
+        }
+
+        $this->smarty->assign(
+            $this->getTemplateVars()
+        );
+
+        return $this->fetch('module:orangemoney/views/templates/hook/return.tpl');
+    }
+
+    /**
+     * Configuration admin
+     */
+    public function getContent()
+    {
+        $this->_html .= $this->postProcess();
+        $this->_html .= $this->renderForm();
+
+        return $this->_html;
+    }
+
+    /**
+     * Configuration Back Office
+     */
+    public function postProcess()
+    {
+        if(Tools::isSubmit('SubmitPaymentConfiguration')) {
+            $configFields = [
+                'OAUTH_URL', 'BASE_URL', 'CONSUMER_KEY', 'MERCHANT_KEY', 'ACCESS_TOKEN','TOKEN_EXPIRE', 
+                'CURRENCY', 'TRANSACTION_STATUS_URL', 'CANCEL_URL', 'RETURN_URL', 'LANG'
+            ];
+
+            foreach($configFields as $field) {
+                Configuration::updateValue($field, Tools::getValue($field));
+            }
+        }
+        return $this->displayConfirmation($this->l('Configuration mise à jour!'));
+    }
+
+    /**
+     * Formulaire de configuration admin
+     */
+    public function renderForm()
+    {
+        $fieldsForm = [
+            'form' => [
+                'legend' => [
+                    'title' => $this->l('Configuration de paiement OrangeMoney'),
+                    'icon' => 'icon-cogs'
+                ],
+                'description' => $this->l('Ici, vous configurez le paiement par OrangeMoney'),
+                'input' => $this->getConfigurationFormInputs(),
+                'submit' => [
+                    'title' => $this->l('Enregistrer'),
+                    'class' => 'button btn btn-default pull-right'
+                ],
+            ],
+        ];
+
+        $helper = new HelperForm();
+        $helper->show_toolbar = false;
+        $helper->default_form_language = (int)Configuration::get('PS_LANG_DEFAULT');
+        $helper->allow_employee_form_lang = Configuration::get('PS_BO_ALLOW_EMPLOYEE_FORM_LANG') ?: 0;
+        $helper->id = 'orangemoney';
+        $helper->identifier = 'orangemoney';
+        $helper->submit_action = 'SubmitPaymentConfiguration';
+        $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
+        $helper->token = Tools::getAdminTokenLite('AdminModules');
+        $helper->tpl_vars = [
+            'fields_value' => $this->getConfigFieldsValues(),
+            'languages' => $this->context->controller->getLanguages(),
+            'id_language' => $this->context->language->id
+        ];
+
+        return $helper->generateForm([$fieldsForm]);
+    }
+} 
