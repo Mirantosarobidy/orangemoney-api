@@ -1,10 +1,12 @@
 <?php
 
+use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
+
 if (!defined('_PS_VERSION_')) {
     exit;
   } 
 
-class Orangemoney extends PayementModule
+class OrangeMoney extends PayementModule
 {
     protected $_html;
 
@@ -18,15 +20,15 @@ class Orangemoney extends PayementModule
     parent::__construct();
 
     $this->displayName = $this->l('OrangeMoney');
-    $this->description = $this->l('Accepter Paiement par OrangeMoney');
-    $this->ps_versions_compliancy = array('min' => '1.7.0', 'max' => _PS_VERSION_);
+    $this->description = $this->l('Faire Paiement par OrangeMoney');
+
     }
 
     public function install()
     {
         if (!parent::install() 
-        || !$this->registerHook('paymentOptions')
-        || !$this->registerHook('paymentReturn')
+        || !$this->registerHook('displayPaymentOptions')
+        || !$this->registerHook('displayPaymentReturn')
         ) {
         return false;
     }
@@ -37,7 +39,7 @@ class Orangemoney extends PayementModule
     * Génération de paiement en ligne
     */ 
                         
-    private function getPaymentUrl() 
+    private function generatePaymentUrl() 
     {
         // vérification de l'accès
         if(empty(Configuration::get('ACCESS_TOKEN'))){
@@ -75,7 +77,7 @@ class Orangemoney extends PayementModule
             return -1;
         }
 
-        return $this->getPaymentUrl();
+        return $this->generatePaymentUrl();
     }
 
     private function initializeCurl($url, $data)
@@ -141,7 +143,7 @@ class Orangemoney extends PayementModule
             return;
         }
 
-        $parameters = $this->getPaymentUrl();
+        $parameters = $this->generatePaymentUrl();
 
         if ($parameters == -1) {
             return;
@@ -149,13 +151,13 @@ class Orangemoney extends PayementModule
 
         $this->smarty->assign(['payment_url' => $parameters->payment_url]);
 
-        $apiPayment = new PaymentOption();
-        $apiPayment->setModuleName($this->name)
+        $paymentApi = new PaymentOption();
+        $paymentApi->setModuleName($this->name)
             ->setCallToActionText($this->l('Orange Money WEBPAY Madagascar'))
-            ->setForm($this->fetch('module:orangemoney/views/templates/hook/payment_api_form.tpl'))
-            ->setAdditionalInformation($this->fetch('module:orangemoney/views/templates/hook/displayPaymentApi.tpl'));
+            ->setForm($this->fetch('module:orangemoney/views/templates/hook/form.tpl'))
+            ->setAdditionalInformation($this->fetch('module:orangemoney/views/templates/hook/redir_api.tpl'));
 
-        return [$apiPayment];
+        return [$paymentApi];
     }
 
     /**
@@ -168,7 +170,7 @@ class Orangemoney extends PayementModule
         }
 
         $this->smarty->assign(
-            $this->getTemplateVars()
+            $this->getTemplateVariables()
         );
 
         return $this->fetch('module:orangemoney/views/templates/hook/return.tpl');
@@ -177,10 +179,10 @@ class Orangemoney extends PayementModule
     /**
      * Configuration admin
      */
-    public function getContent()
+    public function generateContent()
     {
-        $this->_html .= $this->postProcess();
-        $this->_html .= $this->renderForm();
+        $this->_html .= $this->transactionProcess();
+        $this->_html .= $this->displayForm();
 
         return $this->_html;
     }
@@ -188,7 +190,7 @@ class Orangemoney extends PayementModule
     /**
      * Configuration Back Office
      */
-    public function postProcess()
+    public function transactionProcess()
     {
         if(Tools::isSubmit('SubmitPaymentConfiguration')) {
             $configFields = [
@@ -200,22 +202,22 @@ class Orangemoney extends PayementModule
                 Configuration::updateValue($field, Tools::getValue($field));
             }
         }
-        return $this->displayConfirmation($this->l('Configuration mise à jour!'));
+        return $this->displayConfirmation($this->l('Confirmation effectuée!'));
     }
 
     /**
      * Formulaire de configuration admin
      */
-    public function renderForm()
+    public function displayForm()
     {
-        $fieldsForm = [
+        $formFields = [
             'form' => [
                 'legend' => [
-                    'title' => $this->l('Configuration de paiement OrangeMoney'),
+                    'title' => $this->l('Confirmation de paiement OrangeMoney'),
                     'icon' => 'icon-cogs'
                 ],
-                'description' => $this->l('Ici, vous configurez le paiement par OrangeMoney'),
-                'input' => $this->getConfigurationFormInputs(),
+                'description' => $this->l('Vous allez confirmer le paiement par OrangeMoney'),
+                'input' => $this->generateFormInputs(),
                 'submit' => [
                     'title' => $this->l('Enregistrer'),
                     'class' => 'button btn btn-default pull-right'
@@ -233,18 +235,18 @@ class Orangemoney extends PayementModule
         $helper->currentIndex = $this->context->link->getAdminLink('AdminModules', false) . '&configure=' . $this->name . '&tab_module=' . $this->tab . '&module_name=' . $this->name;
         $helper->token = Tools::getAdminTokenLite('AdminModules');
         $helper->tpl_vars = [
-            'fields_value' => $this->getConfigFieldsValues(),
-            'languages' => $this->context->controller->getLanguages(),
+            'fields_value' => $this->generateConfirmationValues(),
+            'languages' => $this->context->controller->generateLanguages(),
             'id_language' => $this->context->language->id
         ];
 
-        return $helper->generateForm([$fieldsForm]);
+        return $helper->generateForm([$formFields]);
     }
 
     /**
      * Configuration formulaire de paiement
      */
-    private function getConfigurationFormInputs()
+    private function generateFormInputs()
     {
         return [
             [
@@ -330,9 +332,9 @@ class Orangemoney extends PayementModule
     /**
      * Configuration des champs de valeurs
      */
-    public function getConfigFieldsValues() 
+    public function generateConfirmationValues()
     {
-        $configFields = [
+        $nameFields = [
             'OAUTH_URL',
             'BASE_URL',
             'CONSUMER_KEY',
@@ -348,7 +350,7 @@ class Orangemoney extends PayementModule
 
         $values = [];
 
-        foreach ($configFields as $field) {
+        foreach ($nameFields as $field) {
             $values[$field] = Tools::getValue($field, Configuration::get($field));
         }
 
@@ -366,4 +368,4 @@ class Orangemoney extends PayementModule
             'payment_details' => $this->l('custom details'),
         ];
     }
-} 
+}
