@@ -4,7 +4,11 @@ use PrestaShop\PrestaShop\Core\Payment\PaymentOption;
 
 if (!defined('_PS_VERSION_')) {
     exit;
-  } 
+  }
+
+if (!class_exists('PayementModule')) {
+    exit('Classe PayementModule introuvable!');
+}
 
 class OrangeMoney extends PayementModule
 {
@@ -140,6 +144,7 @@ class OrangeMoney extends PayementModule
     public function hookPaymentOptions($params)
     {
         if (!$this->active) {
+            error_log('Le module OrangeMoney est désactivé.');
             return;
         }
 
