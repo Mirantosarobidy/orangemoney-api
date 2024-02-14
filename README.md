@@ -7,8 +7,7 @@ Le module OrangeMoney est un module de paiement Prestashop qui permet aux client
 Pour installer le module OrangeMoney dans Prestashop:
 
 1. Télécharger le code depuis GitHub.
-2. Extraire l'archive téléchargé.
-3. Télécharger le dossier du module OrangeMoney dans le répertoire **modules** de Prestashop.
+2. Compresser le dossier en **.zip**
 4. Installer le module.
 
 # Configuration
