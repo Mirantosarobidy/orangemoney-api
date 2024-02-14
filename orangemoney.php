@@ -20,6 +20,7 @@ class OrangeMoney extends PayementModule
     $this->tab = 'payments_gateways';
     $this->version = '0.1.0';
     $this->author = 'Ranto';
+    $this->bootstrap = true;
 
     parent::__construct();
 
@@ -186,8 +187,8 @@ class OrangeMoney extends PayementModule
      */
     public function generateContent()
     {
-        $this->_html .= $this->transactionProcess();
-        $this->_html .= $this->displayForm();
+        $this->_html .= $this->postProcess();
+        $this->_html .= $this->renderForm();
 
         return $this->_html;
     }
@@ -195,7 +196,7 @@ class OrangeMoney extends PayementModule
     /**
      * Configuration Back Office
      */
-    public function transactionProcess()
+    public function postProcess()
     {
         if(Tools::isSubmit('SubmitPaymentConfiguration')) {
             $configFields = [
@@ -213,7 +214,7 @@ class OrangeMoney extends PayementModule
     /**
      * Formulaire de configuration admin
      */
-    public function displayForm()
+    public function renderForm()
     {
         $formFields = [
             'form' => [
